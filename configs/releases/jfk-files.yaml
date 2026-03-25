@@ -1,0 +1,65 @@
+# ─── OpenDocket Release Configuration ────────────────────────────────────────
+# JFK Assassination Records — Template demonstrating generalizability
+# ─────────────────────────────────────────────────────────────────────────────
+
+release:
+  name: "JFK Assassination Records"
+  slug: "jfk-files"
+  description: >
+    Documents released under the President John F. Kennedy Assassination
+    Records Collection Act of 1992. Managed by the National Archives (NARA).
+    This configuration demonstrates OpenDocket's generalizability.
+
+source:
+  type: "government_webpage"
+  urls:
+    - url: "https://www.archives.gov/research/jfk/release"
+      label: "NARA JFK Release Page"
+    - url: "https://www.archives.gov/research/jfk"
+      label: "NARA JFK Collection"
+  document_id_pattern: "\\d{3}-\\d{5}-\\d{5}"
+  scraping:
+    css_selector: ".document-link a[href$='.pdf']"
+    check_interval_seconds: 86400   # Check daily (less frequent than Epstein)
+
+supplementary_sources: []
+
+documentcloud:
+  project_prefix: "jfk-files"
+  access: "public"
+
+discourse:
+  search_queries:
+    - "JFK files"
+    - "JFK assassination records"
+    - "Kennedy assassination documents"
+    - "NARA JFK release"
+  subreddits:
+    - "conspiracy"
+    - "history"
+    - "politics"
+    - "UnresolvedMysteries"
+  youtube_channels:
+    - "HistoryChannel"
+  news_outlets_rss:
+    - "https://www.npr.org/rss/rss.php?id=1001"
+    - "https://feeds.reuters.com/reuters/topNews"
+  courtlistener_queries:
+    - "Kennedy assassination"
+    - "JFK records"
+
+glossary:
+  seed_terms:
+    - term: "201 file"
+      meaning: "CIA's main personality/biographical file on an individual"
+      confidence: "confirmed"
+    - term: "GPFLOOR"
+      meaning: "CIA cryptonym for a specific operation or asset (classified meaning)"
+      confidence: "medium"
+    - term: "HTLINGUAL"
+      meaning: "CIA mail-opening program that intercepted correspondence"
+      confidence: "confirmed"
+    - term: "AM/LASH"
+      meaning: "CIA codename for Rolando Cubela, a Cuban official recruited to assassinate Castro"
+      confidence: "confirmed"
+  auto_detect_enabled: true

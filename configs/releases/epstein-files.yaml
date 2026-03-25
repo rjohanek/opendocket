@@ -1,0 +1,111 @@
+# ─── OpenDocket Release Configuration ────────────────────────────────────────
+# Epstein Files — Documents released under the Epstein Files Transparency Act
+# ─────────────────────────────────────────────────────────────────────────────
+
+release:
+  name: "Epstein Files"
+  slug: "epstein-files"
+  description: >
+    Documents released under the Epstein Files Transparency Act (2025).
+    Includes DOJ disclosures, FBI records, flight logs, depositions,
+    financial records, and communications.
+
+source:
+  type: "government_webpage"
+  urls:
+    - url: "https://www.justice.gov/epstein/doj-disclosures"
+      label: "DOJ Disclosures"
+    - url: "https://www.justice.gov/epstein"
+      label: "Main Epstein Library"
+  document_id_pattern: "EFTA-\\d{4}-\\d{6}"
+  scraping:
+    css_selector: "a[href$='.pdf']"
+    check_interval_seconds: 3600   # Check every hour
+
+supplementary_sources:
+  - type: "jmail_api"
+    base_url: "https://data.jmail.world/v1/"
+    datasets:
+      - "emails"
+      - "hoc-emails"
+
+documentcloud:
+  project_prefix: "epstein-files"
+  access: "public"
+
+discourse:
+  search_queries:
+    - "Epstein files"
+    - "Epstein documents"
+    - "EFTA-"
+    - "DOJ Epstein"
+    - "Epstein flight logs"
+    - "Maxwell deposition"
+  subreddits:
+    - "EpsteinFiles"
+    - "TrueCrime"
+    - "politics"
+    - "news"
+    - "conspiracy"
+    - "law"
+  youtube_channels:
+    - "LegalEagle"
+    - "LawAndCrime"
+    - "BreakingPoints"
+    - "TLDRNews"
+  news_outlets_rss:
+    - "https://www.npr.org/rss/rss.php?id=1001"
+    - "https://feeds.cbsnews.com/feeds/topstories.xml"
+    - "https://feeds.reuters.com/reuters/topNews"
+    - "https://www.theguardian.com/us-news/rss"
+  courtlistener_queries:
+    - "Epstein"
+    - "Maxwell"
+    - "Giuffre"
+    - "Epstein files"
+
+glossary:
+  seed_terms:
+    - term: "the house"
+      meaning: "Epstein's Palm Beach residence at 358 El Brillo Way"
+      confidence: "confirmed"
+    - term: "the island"
+      meaning: "Little St. James, USVI — Epstein's private island"
+      confidence: "confirmed"
+    - term: "the pilot"
+      meaning: "Larry Visoski, Epstein's long-time personal pilot"
+      confidence: "confirmed"
+    - term: "the scheduler"
+      meaning: "Sarah Kellen, who managed Epstein's appointments and recruited victims"
+      confidence: "high"
+    - term: "massage work"
+      meaning: "Recruitment euphemism for sexual abuse at Epstein's residences"
+      confidence: "high"
+    - term: "young assistants"
+      meaning: "Euphemism for underage victims recruited for 'massage' sessions"
+      confidence: "high"
+    - term: "modeling opportunity"
+      meaning: "Recruitment pitch used by Epstein's associates to lure victims"
+      confidence: "high"
+    - term: "the black book"
+      meaning: "Epstein's personal contact directory containing ~1,500 names"
+      confidence: "confirmed"
+    - term: "head of household"
+      meaning: "Maxwell's self-described role managing Epstein's properties and staff"
+      confidence: "confirmed"
+    - term: "N908JE"
+      meaning: "Tail number of Epstein's Boeing 727-31, dubbed 'Lolita Express'"
+      confidence: "confirmed"
+    - term: "the foundation"
+      meaning: "One of several Epstein-connected entities (e.g., Gratitude America, COUQ Foundation)"
+      confidence: "medium"
+    - term: "benefactors"
+      meaning: "Wealthy individuals connected to Epstein's network; specific identities under investigation"
+      confidence: "medium"
+    - term: "scientific research"
+      meaning: "Label used for activities at Zorro Ranch; investigators suspect it served as cover"
+      confidence: "medium"
+    - term: "Zorro Trust"
+      meaning: "LLC used by Epstein to hold Zorro Ranch property in New Mexico"
+      confidence: "confirmed"
+  auto_detect_enabled: true

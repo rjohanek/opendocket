@@ -1,0 +1,151 @@
+version: "3.8"
+
+services:
+  # ─── Core Application ───────────────────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opendocket-api
+    ports:
+      - "8000:8000"
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./configs:/app/configs
+    command: >
+      uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    networks:
+      - opendocket
+
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opendocket-worker
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./configs:/app/configs
+    command: >
+      celery -A app.workers.celery_app worker
+      --loglevel=info --concurrency=4
+    networks:
+      - opendocket
+
+  scheduler:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: opendocket-scheduler
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app
+      - ./configs:/app/configs
+    command: >
+      celery -A app.workers.celery_app beat
+      --loglevel=info
+    networks:
+      - opendocket
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: opendocket-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000
+    networks:
+      - opendocket
+
+  # ─── Data Stores ────────────────────────────────────────────────────
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: opendocket-db
+    env_file: .env
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/01_init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opendocket"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - opendocket
+
+  redis:
+    image: redis:7-alpine
+    container_name: opendocket-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - opendocket
+
+  # ─── External Tool Integrations ─────────────────────────────────────
+  changedetection:
+    image: ghcr.io/dgtlmoon/changedetection.io:latest
+    container_name: opendocket-changedetection
+    ports:
+      - "5000:5000"
+    volumes:
+      - changedetection_data:/datastore
+    environment:
+      - BASE_URL=http://localhost:5000
+      - HIDE_REFERER=true
+    networks:
+      - opendocket
+
+  archivebox:
+    image: archivebox/archivebox:latest
+    container_name: opendocket-archivebox
+    ports:
+      - "8001:8000"
+    volumes:
+      - archivebox_data:/data
+    environment:
+      - ALLOWED_HOSTS=*
+      - SEARCH_BACKEND_ENGINE=sonic
+    networks:
+      - opendocket
+
+volumes:
+  postgres_data:
+  redis_data:
+  changedetection_data:
+  archivebox_data:
+
+networks:
+  opendocket:
+    driver: bridge
