@@ -10,6 +10,8 @@ OpenDocket makes government document releases accessible to the public by solvin
 
 The platform is **generalizable** — deploying for a new government document release (JFK files, FOIA dumps, etc.) requires only a YAML config file, not new code.
 
+Note: This project was made quickly as a proof of concept using Claude.
+
 ---
 
 ## Quick Start
