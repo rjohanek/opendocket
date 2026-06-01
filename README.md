@@ -10,7 +10,9 @@ OpenDocket makes government document releases accessible to the public by solvin
 
 The platform is **generalizable** — deploying for a new government document release (JFK files, FOIA dumps, etc.) requires only a YAML config file, not new code.
 
-Note: This project was made quickly as a proof of concept using Claude.
+Note: This project was made quickly as a proof of concept using Claude. 
+
+Future directions include adding NLP to provide more robust document analysis.
 
 ---
 
@@ -39,15 +41,17 @@ docker compose up -d
 
 This starts:
 
-| Service | URL | Description |
-|---------|-----|-------------|
-| **Frontend** | http://localhost:3000 | Web UI (Next.js) |
-| **API** | http://localhost:8000 | REST API (FastAPI) |
-| **API Docs** | http://localhost:8000/docs | Interactive Swagger docs |
-| **ChangeDetection** | http://localhost:5000 | Website monitoring dashboard |
-| **ArchiveBox** | http://localhost:8001 | Document archive browser |
-| **PostgreSQL** | localhost:5432 | Database |
-| **Redis** | localhost:6379 | Cache & job queue |
+
+| Service             | URL                                                      | Description                  |
+| ------------------- | -------------------------------------------------------- | ---------------------------- |
+| **Frontend**        | [http://localhost:3000](http://localhost:3000)           | Web UI (Next.js)             |
+| **API**             | [http://localhost:8000](http://localhost:8000)           | REST API (FastAPI)           |
+| **API Docs**        | [http://localhost:8000/docs](http://localhost:8000/docs) | Interactive Swagger docs     |
+| **ChangeDetection** | [http://localhost:5000](http://localhost:5000)           | Website monitoring dashboard |
+| **ArchiveBox**      | [http://localhost:8001](http://localhost:8001)           | Document archive browser     |
+| **PostgreSQL**      | localhost:5432                                           | Database                     |
+| **Redis**           | localhost:6379                                           | Cache & job queue            |
+
 
 ### 3. Seed the database with sample data
 
@@ -57,7 +61,7 @@ docker compose exec api python scripts/seed_data.py
 
 ### 4. Open the app
 
-Visit **http://localhost:3000** to see the document index.
+Visit **[http://localhost:3000](http://localhost:3000)** to see the document index.
 
 ---
 
@@ -67,14 +71,16 @@ Visit **http://localhost:3000** to see the document index.
 
 All configuration is done via the `.env` file. The app runs with **no API keys configured** — features degrade gracefully:
 
-| Variable | Required? | What it enables |
-|----------|-----------|-----------------|
-| `DOCUMENTCLOUD_USERNAME` / `PASSWORD` | No | In-browser document viewing via DocumentCloud embed |
-| `REDDIT_CLIENT_ID` / `SECRET` | No | Reddit discourse collection |
-| `YOUTUBE_API_KEY` | No | YouTube discourse collection |
-| `COURTLISTENER_API_KEY` | No | Legal document cross-referencing |
-| `ANTHROPIC_API_KEY` | No | AI-generated discourse summaries and glossary auto-detection |
-| `ACTIVE_RELEASE` | Yes | Which release config to use (default: `epstein-files`) |
+
+| Variable                              | Required? | What it enables                                              |
+| ------------------------------------- | --------- | ------------------------------------------------------------ |
+| `DOCUMENTCLOUD_USERNAME` / `PASSWORD` | No        | In-browser document viewing via DocumentCloud embed          |
+| `REDDIT_CLIENT_ID` / `SECRET`         | No        | Reddit discourse collection                                  |
+| `YOUTUBE_API_KEY`                     | No        | YouTube discourse collection                                 |
+| `COURTLISTENER_API_KEY`               | No        | Legal document cross-referencing                             |
+| `ANTHROPIC_API_KEY`                   | No        | AI-generated discourse summaries and glossary auto-detection |
+| `ACTIVE_RELEASE`                      | Yes       | Which release config to use (default: `epstein-files`)       |
+
 
 **Getting API keys:**
 
@@ -133,46 +139,50 @@ Redis (cache + Celery job queue)
 
 ### Key Components
 
-| Component | Location | What it does |
-|-----------|----------|-------------|
-| **Change Reconciliation Engine** | `backend/app/services/change_reconciler.py` | Processes ChangeDetection.io webhooks, identifies document-level changes, triggers archiving and DocumentCloud uploads |
-| **Discourse Collectors** | `backend/app/services/discourse/collectors.py` | Platform-specific collectors (GDELT, Reddit, YouTube, CourtListener, Bluesky) that gather mentions |
-| **Document Matcher** | `backend/app/services/discourse/matcher.py` | Maps unstructured text mentions back to specific document IDs using multi-strategy matching |
-| **Discourse Summarizer** | `backend/app/services/discourse/summarizer.py` | LLM-based summarization of per-document public discourse with source citations |
-| **Glossary Engine** | `backend/app/services/glossary_engine.py` | Auto-detects jargon in new documents, supports community editing |
-| **Release Config Loader** | `backend/app/core/release_config.py` | Loads YAML configs that parameterize the system for different document releases |
-| **Celery Workers** | `backend/app/workers/celery_app.py` | Scheduled background tasks (discourse collection every 6h, glossary updates daily) |
+
+| Component                        | Location                                       | What it does                                                                                                           |
+| -------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Change Reconciliation Engine** | `backend/app/services/change_reconciler.py`    | Processes ChangeDetection.io webhooks, identifies document-level changes, triggers archiving and DocumentCloud uploads |
+| **Discourse Collectors**         | `backend/app/services/discourse/collectors.py` | Platform-specific collectors (GDELT, Reddit, YouTube, CourtListener, Bluesky) that gather mentions                     |
+| **Document Matcher**             | `backend/app/services/discourse/matcher.py`    | Maps unstructured text mentions back to specific document IDs using multi-strategy matching                            |
+| **Discourse Summarizer**         | `backend/app/services/discourse/summarizer.py` | LLM-based summarization of per-document public discourse with source citations                                         |
+| **Glossary Engine**              | `backend/app/services/glossary_engine.py`      | Auto-detects jargon in new documents, supports community editing                                                       |
+| **Release Config Loader**        | `backend/app/core/release_config.py`           | Loads YAML configs that parameterize the system for different document releases                                        |
+| **Celery Workers**               | `backend/app/workers/celery_app.py`            | Scheduled background tasks (discourse collection every 6h, glossary updates daily)                                     |
+
 
 ---
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/documents` | List/search documents (with filters and sorting) |
-| GET | `/api/documents/stats` | Aggregate statistics |
-| GET | `/api/documents/categories` | List categories with counts |
-| GET | `/api/documents/{id}` | Document detail with change history |
-| GET | `/api/changes/feed` | Recent changes across all documents |
-| GET | `/api/changes/stats` | Change statistics |
-| GET | `/api/changes/stream` | Server-Sent Events for real-time updates |
-| GET | `/api/discourse/trending` | Most-discussed documents |
-| GET | `/api/discourse/co-mentions` | Document co-mention network |
-| GET | `/api/discourse/{doc_id}` | Discourse feed for a specific document |
-| GET | `/api/glossary` | Full glossary with search and filtering |
-| POST | `/api/glossary` | Propose a new glossary term |
-| PATCH | `/api/glossary/{id}` | Edit a glossary term |
-| GET | `/api/config/releases` | List available release configurations |
-| POST | `/api/webhooks/change-detected` | ChangeDetection.io webhook |
-| GET | `/api/health` | Health check |
 
-Full interactive docs at **http://localhost:8000/docs** (Swagger UI).
+| Method | Endpoint                        | Description                                      |
+| ------ | ------------------------------- | ------------------------------------------------ |
+| GET    | `/api/documents`                | List/search documents (with filters and sorting) |
+| GET    | `/api/documents/stats`          | Aggregate statistics                             |
+| GET    | `/api/documents/categories`     | List categories with counts                      |
+| GET    | `/api/documents/{id}`           | Document detail with change history              |
+| GET    | `/api/changes/feed`             | Recent changes across all documents              |
+| GET    | `/api/changes/stats`            | Change statistics                                |
+| GET    | `/api/changes/stream`           | Server-Sent Events for real-time updates         |
+| GET    | `/api/discourse/trending`       | Most-discussed documents                         |
+| GET    | `/api/discourse/co-mentions`    | Document co-mention network                      |
+| GET    | `/api/discourse/{doc_id}`       | Discourse feed for a specific document           |
+| GET    | `/api/glossary`                 | Full glossary with search and filtering          |
+| POST   | `/api/glossary`                 | Propose a new glossary term                      |
+| PATCH  | `/api/glossary/{id}`            | Edit a glossary term                             |
+| GET    | `/api/config/releases`          | List available release configurations            |
+| POST   | `/api/webhooks/change-detected` | ChangeDetection.io webhook                       |
+| GET    | `/api/health`                   | Health check                                     |
+
+
+Full interactive docs at **[http://localhost:8000/docs](http://localhost:8000/docs)** (Swagger UI).
 
 ---
 
 ## Setting Up ChangeDetection.io
 
-After `docker compose up`, visit **http://localhost:5000** to configure watches:
+After `docker compose up`, visit **[http://localhost:5000](http://localhost:5000)** to configure watches:
 
 1. Click **"+ Add"** to create a new watch
 2. Enter the DOJ page URL: `https://www.justice.gov/epstein/doj-disclosures`
@@ -293,3 +303,4 @@ Contributions welcome! Key areas where help is needed:
 - **Community moderation tools** for the glossary
 - **Accessibility improvements** (screen readers, keyboard navigation)
 - **Internationalization** (many government releases are multilingual)
+
